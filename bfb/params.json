@@ -1,0 +1,42 @@
+{
+    // Discretization
+    // -----------------------------------------------------------------------
+    // n0 - number of grid points from distributor to fuel inlet
+    // n1 - number of grid points from fuel inlet to top of bed
+    // n2 - number of grid points from top of bed to reactor top
+    // nt - total number of timesteps to calculate [s]
+    // dt - amount of time each timestep covers, ∆t [s]
+    "n0": 10,
+    "n1": 40,
+    "n2": 50,
+    "nt": 5000,
+    "dt": 0.001,
+
+    // Feedstock
+    // -----------------------------------------------------------------------
+    // dp_bio - Sauter mean diameter of biomass particle [m]
+    // k - thermal conductivity (assumed same for biomass and char) [W/(m·K)]
+    // rho_bio - biomass density based on pine [kg/m³]
+    // rho_char - char density [kg/m³]
+    "dp_bio": 0.000134,
+    "k": 0.25,
+    "rho_bio": 540,
+    "rho_char": 150,
+
+    // Reactor
+    // -----------------------------------------------------------------------
+    // di - inner reactor diameter [m]
+    // do - outer reactor diameter [m]
+    // din_bio - inner diameter of biomass inlet [m]
+    // mfin_bio - biomass inlet flow rate, 420 g/hr [kg/s]
+    // zin - biomass feed inlet position above distributor [m]
+    // zst - static bed height [m]
+    // zt - total height of the reactor [m]
+    "di": 0.0525,
+    "do": 0.0603,
+    "din_bio": 0.0127,
+    "mfin_bio": 0.0001167,
+    "zin": 0.019,
+    "zst": 0.1016,
+    "zt": 0.4318
+}
