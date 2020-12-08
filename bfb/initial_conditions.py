@@ -25,10 +25,10 @@ def init_cond(params):
     # Determine initial conditions
     # ------------------------------------------------------------------------
 
-    # Cross-section area of biomass inlet [m²]
+    # cross-section area of biomass inlet [m²]
     ain_bio = (np.pi / 4) * (din_bio**2)
 
-    # Initial solid fuel particle velocity [m/s]
+    # initial solid fuel particle velocity [m/s]
     v0 = mf_bio / (rho_bio * ain_bio)
 
     # Initial conditions

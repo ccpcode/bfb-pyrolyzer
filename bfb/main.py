@@ -28,7 +28,9 @@ def main():
     results = solver(params, ic, dz, nz)
 
     # Plot results
-    plotter.plot_solid_velocity(results['v'], z)
+    plotter.plot_rhobb(results['rhobb'], z)
+    plotter.plot_rhocc(results['rhocc'], z)
+    plotter.plot_v(results['v'], z)
     plotter.show_plots()
 
 

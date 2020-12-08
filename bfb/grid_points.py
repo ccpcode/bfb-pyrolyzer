@@ -83,10 +83,11 @@ if __name__ == '__main__':
     ax1.set_xlabel('Grid point delta [-]')
     ax1.set_ylabel('Distance between grid points, ∆z [m]')
     ax2.plot(z, marker='.')
-    ax2.axvline(n0 - 1, color='C1')
-    ax2.axvline(n0 + n1 - 2, color='C2')
+    ax2.axvline(n0 - 1, color='C1', label='n0')
+    ax2.axvline(n0 + n1 - 2, color='C2', label='n0 + n1')
     ax2.set_xlabel('Grid point, n [-]')
     ax2.set_ylabel('Reactor height, z [m]')
+    ax2.legend()
 
     # Example 2
     # -------------------------------------------
