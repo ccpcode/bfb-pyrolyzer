@@ -1,0 +1,13 @@
+{
+    // Feedstock
+    // -----------------------------------------------------------------------
+    // dp_bio - Sauter mean diameter of biomass particle [m]
+    // k - thermal conductivity (assumed same for biomass and char) [W/(m·K)]
+    "dp_bio": 0.000134,
+    "k": 0.25,
+
+    // Reactor
+    // -----------------------------------------------------------------------
+    // do - outer diameter of the reactor [m]
+    "do": 0.0603,
+}

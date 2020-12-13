@@ -1,153 +1,125 @@
+import chemics as cm
+import logging
 import numpy as np
+from scipy.integrate import solve_ivp
+from dydt_system import dydt
 
 
-def solver(params, initcond, dz, nz):
+def solver(params):
     """
-    Solve equations for 1-D model of BFB biomass pyrolyzer.
-
-    Parameters
-    ----------
-    params : dict
-        Dictionary of values from parameters file
-    initcond : dict
-        Dictionary of initial conditions
-    dz : array
-        Distance between grid points, ∆z [m]
-    nz : float
-        Total number of grid points in z-direction [-]
-
-    Returns
-    -------
-    results : dict
-        Dictionary of results
+    Solve one-dimensional biomass pyrolysis model.
     """
 
-    # Parameters
+    # One-dimensional grid
     # ------------------------------------------------------------------------
-    n0 = params['n0']
-    n1 = params['n1']
-    nt = params['nt']
-    dt = params['dt']
-    din_bio = params['din_bio']
-    mfin_bio = params['mfin_bio']
-    rhob = params['rho_bio']
-    rhoc = params['rho_char']
 
-    # Constants
+    ls = params['ls']       # distance to solid fuel inlet [m]
+    lst = params['lst']     # static bed height [m]
+    lt = params['lt']       # reactor height [m]
+    lp = lst - ls           # distance from solid fuel inlet to bed top [m]
+
+    n1 = params['n1']       # number of grid points below fuel inlet
+    n2 = params['n2']       # number of grid points above fuel inlet
+    n3 = params['n3']       # number of grid points in freeboard
+    ni = n1 + n2            # grid point at top of bed
+    n = n1 + n2 + n3        # grid point at top of reactor
+
+    dz1 = ls / n1           # dz in bed below fuel inlet [m]
+    dz2 = lp / n2           # dz in bed above fuel inlet [m]
+    dz3 = (lt - lst) / n3   # dz for freeboard [m]
+
+    dz = np.zeros(n)        # dz vector for reactor [m]
+    dz[0:n1] = dz1
+    dz[n1:ni] = dz2
+    dz[ni:n] = dz3
+
+    z1 = np.linspace(0, ls, n1)         # z below fuel inlet [m]
+    z2 = np.linspace(ls, lp, n2)        # z above fuel inlet [m]
+    z3 = np.linspace(lp, lt, n3)        # z for freeboard [m]
+    z = np.concatenate((z1, z2, z3))    # z vector for reactor [m]
+
+    # Bubble phase
     # ------------------------------------------------------------------------
-    g = 9.81        # acceleration from gravity [m/s²]
-    r = 0.008314    # universal gas constant [kJ/(mol K)]
+
+    di = params['di']       # inner diameter of the reactor [m]
+    dpp = params['dpp']     # mean diameter of bed particle [m]
+    emf = params['emf']     # void fraction of the bed [-]
+    phip = params['phip']   # sphericity of bed particle [-]
+    rhop = params['rhop']   # bed particle density [kg/m³]
+    ug = params['ug']       # velocity of inlet gas [SLM]
+
+    ac = (np.pi / 4) * (di**2)  # inner cross-section area of the reactor [m²]
 
     # TODO: calculate rhog, this value is for nitrogen gas
     rhog = 0.422
 
-    # TODO: calculate ts
-    ts = 773.15     # solid fuel temperature [K]
+    # TODO: define pressure and temp in parameters file
+    # superficial gas velocity at gas inlet [m/s]
+    q_lpm = cm.slm_to_lpm(ug, 101.3, 773.15)
+    q_m3s = q_lpm / 60_000
+    us = q_m3s / ac
 
-    a1 = 1.3e8      # biomass -> volatiles frequency factor [1/s]
-    a2 = 2.0e8      # biomass -> tar frequency factor [1/s]
-    a3 = 1.08e7     # biomass -> char frequency factor [1/s]
+    # TODO: calculate gas properties
+    # minimum fluidization velocity [m/s]
+    umf = cm.umf_ergun(dpp, emf, 3.6e-5, phip, rhog, rhop)
 
-    e1 = 140        # biomass -> volatiles activation energy [kJ/mol]
-    e2 = 133        # biomass -> tar activation energy [kJ/mol]
-    e3 = 121        # biomass -> char activation energy [kJ/mol]
-
-    # Setup
-    # ------------------------------------------------------------------------
-
-    # cross-section area of biomass feed inlet [m²]
-    ain_bio = (np.pi / 4) * (din_bio**2)
-
-    # number of grid points to top of bed
-    nbed = n0 + n1
-
-    # Initialize arrays
-    # ------------------------------------------------------------------------
-    # rows = time steps ∆t
-    # columns = grid points along reactor height in z-direction
-
-    # arrays for biomass and char mass concentrations [kg/m³]
-    # to prevent division by zero use 1e-12 instead of 0
-    rhobb = np.ones((nt, nz)) * 1e-12
-    rhocc = np.ones((nt, nz)) * 1e-12
-
-    # array for solid fuel velocity [m/s]
-    v = np.zeros((nt, nz))
+    db = 0.00853 * (1 + 27.2 * (us - umf))**(1 / 3) * (1 + 6.84 * z)**(1.21)
+    vb = 1.285 * ((db / di)**1.52) * di
+    ub = 12.51 * ((us - umf)**0.362) * ((db / di)**0.52) * di
 
     # Initial conditions
     # ------------------------------------------------------------------------
 
-    # initial velocity of solid fuel [m/s]
-    # v[0, 1:n0 + n1] = initcond['v0']
-    v[0, n0] = initcond['v0']
+    dis = params['dis']     # inner diameter of biomass inlet tube [m]
+    mf = params['mf']       # biomass inlet feed flow rate [kg/s]
+    rhob = params['rhob']   # biomass density [kg/m³]
 
-    # Solve
+    ai = (np.pi / 4) * (dis**2)     # inner cross-section area of inlet [m²]
+    vi = mf / (rhob * ai)           # biomass velocity at fuel inlet [m/s]
+
+    rhobb0 = np.zeros(n)    # initial biomass mass concentration [kg/m³]
+    rhobb0[:] = 1e-12
+
+    rhocc0 = np.zeros(n)    # initial char mass concentration [kg/m³]
+
+    v0 = np.zeros(n)        # initial solid fuel velocity [m/s]
+    v0[n1] = vi
+
+    # Solve ODEs
     # ------------------------------------------------------------------------
 
-    for n in range(1, nt):
+    tf = params['tf']   # final time [s]
+    tspan = (0, tf)     # time span [s]
 
-        # state of the system at time step n
-        rhobbn = rhobb[n - 1]
-        rhoccn = rhocc[n - 1]
-        vn = v[n - 1]
+    y0 = np.concatenate((rhobb0, rhocc0, v0))   # initial conditions vector
 
-        # kinetic rate constants
-        k1 = a1 * np.exp(-e1 / (r * ts))
-        k2 = a2 * np.exp(-e2 / (r * ts))
-        k3 = a3 * np.exp(-e3 / (r * ts))
+    sol = solve_ivp(dydt, tspan, y0, method='Radau', args=(ac, dz, n, ni, ub, vb, params))
 
-        # mass generation terms
-        sb0 = -(k1 + k2 + k3) * rhobbn[1:n0] * dt
-        sb1 = -(k1 + k2 + k3) * rhobbn[n0 + 1:nbed] * dt
-        sb = -(k1 + k2 + k3) * rhobbn[n0] * dt
-        sc = k3 * rhobbn[1:n0 + n1] * dt
+    # Log
+    # ------------------------------------------------------------------------
 
-        # biomass mass concentration below inlet (from 0 to n0)
-        rhobb[n, 1:n0] = (
-            rhobbn[1:n0]
-            - (vn[1:n0] * rhobbn[1:n0] - vn[0:n0 - 1] * rhobbn[0:n0 - 1]) * dt / dz[1:n0]
-            + sb0
-        )
+    logging.basicConfig(format='%(message)s', level=logging.INFO)
 
-        # biomass mass concentration at inlet (n0)
-        rhobb[n, n0] = (
-            rhobbn[n0]
-            - (vn[n0] * rhobbn[n0] - vn[n0 - 1] * rhobbn[n0 - 1]) * dt / dz[n0]
-            + mfin_bio / (ain_bio * dz[n0])
-            + sb
-        )
+    log = (
+        f't0      {sol.t[0]}\n'
+        f'tf      {sol.t[-1]}\n'
+        f'n       {n}\n'
+        f'len t   {len(sol.t)}\n'
+        f'y shape {sol.y.shape}'
+    )
 
-        # biomass mass concentration above inlet (from n0 to n1)
-        rhobb[n, n0 + 1:nbed] = (
-            rhobbn[n0 + 1:nbed]
-            - (vn[n0 + 1:nbed] * rhobbn[n0 + 1:nbed] - vn[n0:nbed - 1] * rhobbn[n0:nbed - 1]) * dt / dz[n0 + 1:nbed]
-            + sb1
-        )
-
-        # char mass concentration
-        rhocc[n, 1:nbed] = (
-            rhoccn[1:nbed]
-            - (vn[1:nbed] * rhoccn[1:nbed] - vn[0:nbed - 1] * rhoccn[0:nbed - 1]) * dt / dz[1:nbed]
-            + sc
-        )
-
-        # solid fuel velocity
-        yc = rhoccn[1:] / (rhoccn[1:] + rhobbn[1:])
-        rhos = ((yc / rhoc) + (1 - yc) / rhob)**(-1)
-
-        v[n, 1:] = (
-            vn[1:]
-            - vn[1:] * (vn[1:] - vn[:-1]) * dt / dz
-            + g * (rhos - rhog) * dt / rhos
-        )
+    logging.info(log)
 
     # Results
     # ------------------------------------------------------------------------
 
     results = {
-        'rhobb': rhobb,
-        'rhocc': rhocc,
-        'v': v
+        'n': n,
+        'z': z,
+        't': sol.t,
+        'rhobb': sol.y[0:n],
+        'rhocc': sol.y[n:2 * n],
+        'v': sol.y[2 * n:]
     }
 
     return results

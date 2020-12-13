@@ -160,31 +160,3 @@ def psi_biomass(rhob, rhoc, wa, wc):
     """
     psi = rhoc / (rhob * (wc + wa))
     return psi
-
-
-def ysc_mass_frac(rhosb, rhosc):
-    """
-    Calculate mass fraction of char particles in solid fuel mixture. See
-    Equation 14 in Agu 2019 paper.
-
-    Parameters
-    ----------
-    rhosb : float or array
-        Mass concentration of biomass in solid fuel [kg/m³]
-    rhosc : float or array
-        Mass concentration of char in solid fuel [kg/m³]
-
-    Returns
-    -------
-    ysc : float or array
-        Mass fraction of char [-]
-
-    References
-    ----------
-    Cornelius E. Agu, Christoph Pfeifer, Marianne Eikeland, Lars-Andre
-    Tokheim, and Britt M.E. Moldestad. Detailed One-Dimensional Model for
-    Steam-Biomass Gasification in a Bubbling Fluidized Bed. Energy and Fuels,
-    vol. 33, pp. 7385-7397, 2019.
-    """
-    ysc = rhosc / (rhosb + rhosc)
-    return ysc

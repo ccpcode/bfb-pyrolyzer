@@ -1,36 +1,23 @@
 import plotter
-from grid_points import grid_points
-from initial_conditions import init_cond
 from read_json import read_json
 from solver import solver
 
 
 def main():
     """
-    Run BFB biomass pyrolyzer 1-D model.
+    Run one-dimensional BFB biomass pyrolysis model.
     """
 
     # Get parameters
     params = read_json('params.json')
 
-    # Configuration
-    t = params['nt'] * params['dt']
-    print(f'Total time = {t} s')
-
-    # Grid points and distance between all grid points
-    z, dz = grid_points(params)
-    nz = len(z)
-
-    # Initial conditions
-    ic = init_cond(params)
-
     # Run solver
-    results = solver(params, ic, dz, nz)
+    results = solver(params)
 
     # Plot results
-    plotter.plot_rhobb(results['rhobb'], z)
-    plotter.plot_rhocc(results['rhocc'], z)
-    plotter.plot_v(results['v'], z)
+    plotter.plot_rhobb(params, results)
+    plotter.plot_rhocc(params, results)
+    plotter.plot_v(params, results)
     plotter.show_plots()
 
 
