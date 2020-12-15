@@ -1,41 +1,57 @@
 {
-    // tf - final time used for solver time span [s]
+    // tf   final time used for solver time span [s]
     "tf": 5,
 
-    // n1 - number of grid points below fuel inlet
-    // n2 - number of grid points above fuel inlet
-    // n3 - number of grid points in freeboard
+    // n1   number of grid points below fuel inlet
+    // n2   number of grid points above fuel inlet
+    // n3   number of grid points in freeboard
     "n1": 50,
     "n2": 30,
     "n3": 20,
 
-    // ls  - distance to solid fuel inlet [m]
-    // lst - static bed height [m]
-    // lt  - reactor height [m]
+    // ls   distance to solid fuel inlet [m]
+    // lst  static bed height [m]
+    // lt   reactor height [m]
     "ls": 0.019,
     "lst": 0.1016,
     "lt": 0.4318,
 
-    // di   - inner diameter of the reactor [m]
-    // dis  - inner diameter of solid fuel inlet tube [m]
-    // dpp  - mean diameter of bed particle [m]
-    // emf  - void fraction of the bed at the minimum fluidization [-]
-    // fw   - bubble wake fraction [-]
-    // mf   - solid fuel flow rate at inlet, 420 g/hr [kg/s]
-    // phip - sphericity of bed particle [-]
-    // rhob - biomass density [kg/m³]
-    // rhoc - char density [kg/m³]
-    // rhop - bed particle density, based on sand [kg/m³]
-    // ug   - velocity of inlet gas, standard liters per minute [SLM]
-    "di": 0.0525,
-    "dis": 0.0127,
-    "dpp": 0.000453,
+    // d        inner diameter of the reactor bed [m]
+    // d_si     inner diameter of solid fuel inlet tube [m]
+    // d_b      mean diameter of raw biomass particle [m]
+    // d_p      mean diameter of inert bed particle [m]
+    // e        coefficient of restitution between biomass and sand [-]
+    // emf      void fraction of the bed at the minimum fluidization [-]
+    // theta_w  bubble wake fraction [-]
+    // mf       solid fuel flow rate at inlet, 420 g/hr [kg/s]
+    // mu_c     Coulomb coefficient of friction between biomass and sand [-]
+    // nf1      fragmentation factor of biomass particles [-]
+    // phi_p    sphericity of bed particle [-]
+    // psi_s    sphericity of solid fuel particle [-]
+    // rho_b    biomass density [kg/m³]
+    // rho_c    char density [kg/m³]
+    // rho_p    bed particle density, based on sand [kg/m³]
+    // ug       velocity of inlet gas, standard liters per minute [SLM]
+    // wa       weight fraction of ash in biomass particle [-]
+    // wc       weight fraction of char in biomass particle [-]
+    // xc       char conversion factor, use 0 for biomass pyrolysis [-]
+    "d": 0.0525,
+    "d_si": 0.0127,
+    "d_b": 0.000134,
+    "d_p": 0.000453,
+    "e": 0.9,
     "emf": 0.45,
-    "fw": 0.25,
+    "theta_w": 0.25,
     "mf": 0.0001167,
-    "phip": 0.91,
-    "rhob": 540,
-    "rhoc": 150,
-    "rhop": 2650,
-    "ug": 14
+    "mu_c": 0.62,
+    "nf1": 1.4,
+    "phi_p": 0.91,
+    "psi_s": 0.63,
+    "rho_b": 540,
+    "rho_c": 150,
+    "rho_p": 2650,
+    "ug": 14,
+    "wa": 0.0041,
+    "wc": 0.144,
+    "xc": 0
 }
